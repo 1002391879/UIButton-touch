@@ -40,7 +40,7 @@
 {
     if ([NSStringFromClass(self.class) isEqualToString:@"UIButton"]) {
         if (self.isIgnoreEvent == 0) {
-            self.timeInterval = defaultInterval;
+            self.timeInterval =self.timeInterval ==0 ?defaultInterval:self.timeInterval;
         };
         if (self.isIgnoreEvent) return;
         if (self.timeInterval > 0)
