@@ -7,6 +7,7 @@
 //
 
 #import "UIButton+touch.h"
+#import <objc/runtime.h>
 @interface UIButton()
 /**bool 类型 YES 不允许点击   NO 允许点击   设置是否执行点UI方法*/
 @property (nonatomic, assign) BOOL isIgnoreEvent;
@@ -30,21 +31,22 @@
         }
     });
 }
-- (NSTimeInterval)timeInterval
-{
+- (NSTimeInterval)timeInterval{
     return [objc_getAssociatedObject(self, _cmd) doubleValue];
 }
-- (void)setTimeInterval:(NSTimeInterval)timeInterval
-{
+- (void)setTimeInterval:(NSTimeInterval)timeInterval{
     objc_setAssociatedObject(self, @selector(timeInterval), @(timeInterval), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
 }
 //当我们按钮点击事件 sendAction 时  将会执行  mySendAction
-- (void)mySendAction:(SEL)action to:(id)target forEvent:(UIEvent *)event
-{
+- (void)mySendAction:(SEL)action to:(id)target forEvent:(UIEvent *)event{
+    if (self.isIgnore) {
+        //不需要被hook
+        [self mySendAction:action to:target forEvent:event];
+        return;
+    }
     if ([NSStringFromClass(self.class) isEqualToString:@"UIButton"]) {
-        
-        self.timeInterval =self.timeInterval ==0 ?defaultInterval:self.timeInterval;
+        self.timeInterval =self.timeInterval == 0 ?defaultInterval:self.timeInterval;
         if (self.isIgnoreEvent){
             return;
         }else if (self.timeInterval > 0){
@@ -61,6 +63,14 @@
     objc_setAssociatedObject(self, @selector(isIgnoreEvent), @(isIgnoreEvent), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 - (BOOL)isIgnoreEvent{
+    //_cmd == @select(isIgnore); 和set方法里一致
+    return [objc_getAssociatedObject(self, _cmd) boolValue];
+}
+- (void)setIsIgnore:(BOOL)isIgnore{
+    // 注意BOOL类型 需要用OBJC_ASSOCIATION_RETAIN_NONATOMIC 不要用错，否则set方法会赋值出错
+    objc_setAssociatedObject(self, @selector(isIgnore), @(isIgnore), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+- (BOOL)isIgnore{
     //_cmd == @select(isIgnore); 和set方法里一致
     return [objc_getAssociatedObject(self, _cmd) boolValue];
 }
